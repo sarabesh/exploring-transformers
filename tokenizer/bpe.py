@@ -72,8 +72,7 @@ class BPETokenizer:
     
     def save_trained(self, filepath):
         with open(filepath, "w", encoding="utf-8") as f:
-            for idx in range(len(self.vocab)):
-                token_bytes = self.vocab[idx]
+            for idx, token_bytes in self.vocab.items():
                 f.write(f"{idx}\t{token_bytes}\n")
             f.write("Merges:\n")
             for (t1, t2), idx in self.merges.items():
@@ -108,16 +107,15 @@ if __name__ == "__main__":
     with open(os.path.join(BASE, "data/max.txt"), "r", encoding="utf-8") as file:
         sample_text = file.read()
     sample_tokens = tokenizer.train(sample_text, max_vocab_size=512)
-    # print("Vocabulary:", tokenizer.vocab)
-    # print("Merges:", tokenizer.merges)
-    print("Sample Tokens after training:", sample_tokens)
+    tokenizer.save_trained("bpe_tokenizer.txt")
+    tokenizer.load_trained("bpe_tokenizer.txt")
     
     encoded = tokenizer.encode(sample_text)
-    print("Encoded:", encoded)
+    # print("Encoded:", encoded)
     print(len(sample_tokens), len(encoded))
     print(encoded==sample_tokens)
     decoded = tokenizer.decode(encoded)
-    print("Decoded:", decoded)
+    # print("Decoded:", decoded)
 
     sample_text2 = """And the encode function does opposite of decode. The encode function takes a string of text as input and converts it into a list of integers (tokens) representing the encoded sequence. Here’s how it works step by step: Text Encoding: Initially, the function converts the input text into a list of integers using UTF-8 encoding. Each character in the text is encoded into one or more bytes, and these byte values are stored in tokens.
 Merging Process: While there are at least two tokens in the list (while len(tokens) >= 2), the function calculates statistics (stats) about potential pairs of tokens that can be merged together to form new tokens. This is done using a helper function get_stats.
@@ -126,7 +124,7 @@ Merging and Updating Tokens: If the selected pair (pair) is found in merges, ind
 Termination: The process continues until no more eligible pairs can be found (if pair not in merges), indicating that all possible merges have been completed.
 Return Tokens: Finally, the function returns the list of tokens representing the encoded sequence of the input text."""
     encoded2 = tokenizer.encode(sample_text2)
-    print("Encoded2:", encoded2)
+    # print("Encoded2:", encoded2)
     decoded2 = tokenizer.decode(encoded2)
-    print("Decoded2:", decoded2)
+    # print("Decoded2:", decoded2)
     print(sample_text2==decoded2)
