@@ -18,9 +18,10 @@ import os
 import torch
 import torch.nn as nn
 from einops import rearrange, repeat
+from rope import apply_rotary_emb, precompute_freqs_cis
 
 
-class MultiHeadAttention(nn.Moduule):\
+class MultiHeadAttention(nn.Moduule):
     #multi head attention module, input 
     def __init__(self, embed_size, heads):
         super().__init__()
@@ -29,7 +30,7 @@ class MultiHeadAttention(nn.Moduule):\
         self.head_dim = embed_size // heads
 
         self.wq = nn.Linear(embed_size, embed_size) # weight matrices, shape: (embed_size, embed_size)
-        self.wk = nn.Linear(embed_size, embed_size)
+        self.wk = nn.Linear(embed_size, embed_size) # linear layers, number of inputs to each neuron, number of neurons/output size, creating weights of size (in_features, out_features)
         self.wv = nn.Linear(embed_size, embed_size)
 
 
@@ -39,6 +40,8 @@ class MultiHeadAttention(nn.Moduule):\
         k = self.wk(x)
         v = self.wv(x)
 
+        freqs_cis = precompute_freqs_cis(theta=10000.0, dim=self.head_dim, end=x.shape[1])
+        q, k = apply_rotary_emb(q, k, freqs_cis)
 
         q = rearrange(q, "b s (h d) -> (b h) s d", h=self.heads) # shape: (batch_size*heads, seq_length, head_dim)
         k = rearrange(k, "b s (h d) -> (b h) s d", h=self.heads)
