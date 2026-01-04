@@ -14,12 +14,11 @@
 
 #o/p
 
-import os
 import torch
 import torch.nn as nn
 from einops import rearrange, repeat
 from rope import apply_rotary_emb, precompute_freqs_cis
-
+from embedding import EmbeddingLayer
 
 class MultiHeadAttention(nn.Moduule):
     #multi head attention module, input 
@@ -35,7 +34,7 @@ class MultiHeadAttention(nn.Moduule):
 
 
     def forward(self, x):
-        #
+        # x shape: (batch_size, seq_length, embed_size)
         q = self.wq(x) # shape: (batch_size, seq_length, embed_size)
         k = self.wk(x)
         v = self.wv(x)
@@ -53,38 +52,14 @@ class MultiHeadAttention(nn.Moduule):
         return scores
 
 
-
-
-def attention(q, k, v): # shape: (batch_size*heads, seq_length, head_dim)
+def attention(q, k, v, causal=False): # shape: (batch_size*heads, seq_length, head_dim)
     d_k = k.size(-1)
     #q,k,v: (batch_size*heads, seq_length, head_dim)
     scores = torch.matmul(q, k.transpose(-2, -1)) / torch.sqrt(d_k) # shape: (batch_size*heads, seq_length, seq_length)
+    if causal: #for llms
+        causal_mask = torch.triu(torch.ones(scores.size(-2), scores.size(-1)), diagonal=1).bool().to(scores.device) # upper triangular matrix with 1s above diagonal
+        scores = scores.masked_fill(causal_mask, float('-inf')) # mask out future positions
     weights = torch.nn.functional.softmax(scores, dim=-1) # shape: (batch_size*heads, seq_length, seq_length) Softmax along seq_length i.e each row
     output = torch.matmul(weights, v) # shape: (batch_size*heads, seq_length, head_dim)
     return output
     
- 
-# class embed(text):
-#     #tokens = tokenize(text)
-#     #embedding = embedding_matrix(tokens)
-#     #return embedding
-
-# class transformer_block(input_emb):
-#     class multihead_attention(x):
-#         #get Q,K,V for x
-#         #split for each head
-#         #do attention 
-#         #concat all heads
-#     #concat x with attention o/p
-#     #layernorm
-#     class feedforward(x):
-#         #nn 2
-#     # concat x with o/p
-#     #return x
-
-# class GPT(x):
-#     #embed(x)
-#     #position_enc(x)
-#     #concat emb + pos
-#     #x=transformer_block(x)*16
-#     #linear_projection(x)
