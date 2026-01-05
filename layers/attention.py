@@ -16,11 +16,11 @@
 
 import torch
 import torch.nn as nn
-from einops import rearrange, repeat
-from rope import apply_rotary_emb, precompute_freqs_cis
-from embedding import EmbeddingLayer
+from einops import rearrange
+from layers.rope import apply_rotary_emb, precompute_freqs_cis
+import math
 
-class MultiHeadAttention(nn.Moduule):
+class MultiHeadAttention(nn.Module):
     #multi head attention module, input 
     def __init__(self, embed_size, heads):
         super().__init__()
@@ -39,10 +39,11 @@ class MultiHeadAttention(nn.Moduule):
         k = self.wk(x)
         v = self.wv(x)
 
-        freqs_cis = precompute_freqs_cis(theta=10000.0, dim=self.head_dim, end=x.shape[1])
+        freqs_cis = precompute_freqs_cis(theta=10000.0, dim=self.embed_size, end=x.shape[1])
+
         q, k = apply_rotary_emb(q, k, freqs_cis)
 
-        q = rearrange(q, "b s (h d) -> (b h) s d", h=self.heads) # shape: (batch_size*heads, seq_length, head_dim)
+        q = rearrange(q, "b s (h d) -> (b h) s d", h=self.heads) # reshaping from (batch_size, seq_length, embed_size) to (batch_size*heads, seq_length, head_dim)
         k = rearrange(k, "b s (h d) -> (b h) s d", h=self.heads)
         v = rearrange(v, "b s (h d) -> (b h) s d", h=self.heads)
 
@@ -55,7 +56,8 @@ class MultiHeadAttention(nn.Moduule):
 def attention(q, k, v, causal=False): # shape: (batch_size*heads, seq_length, head_dim)
     d_k = k.size(-1)
     #q,k,v: (batch_size*heads, seq_length, head_dim)
-    scores = torch.matmul(q, k.transpose(-2, -1)) / torch.sqrt(d_k) # shape: (batch_size*heads, seq_length, seq_length)
+    print(q.shape, k.shape, v.shape)
+    scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k) # shape: (batch_size*heads, seq_length, seq_length)
     if causal: #for llms
         causal_mask = torch.triu(torch.ones(scores.size(-2), scores.size(-1)), diagonal=1).bool().to(scores.device) # upper triangular matrix with 1s above diagonal
         scores = scores.masked_fill(causal_mask, float('-inf')) # mask out future positions

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class FeedForward(nn.Module):
-    def __inint__(self, embed_size):
+    def __init__(self, embed_size):
         super().__init__()
         self.fc1 = nn.Linear(embed_size, embed_size*4)
         self.fc2 = nn.Linear(embed_size*4, embed_size)

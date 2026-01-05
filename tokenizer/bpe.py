@@ -7,7 +7,7 @@ from typing import Any
 
 
 
-class BPETokenizer:
+class BPE:
     def __init__(self):
         self.vocab = {i: bytes([i]) for i in range(256)} # initial vocab: byte values 0-255 mapped to their byte representation
         self.merges = {}
@@ -202,7 +202,7 @@ class BPETokenizer:
     
 
 if __name__ == "__main__":
-    tokenizer = BPETokenizer()
+    tokenizer = BPE()
     #read text file for training
     
     BASE = os.path.dirname(os.path.abspath(__file__))

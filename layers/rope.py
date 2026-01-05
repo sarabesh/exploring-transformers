@@ -6,11 +6,11 @@ from typing import Tuple
 
 
 def apply_rotary_emb(xq: torch.Tensor,xk: torch.Tensor,freqs_cis: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-    xq_ = torch.view_as_complex(xq.float().reshape(*xq.shape[:-1], -1, 2)) # reshape last dim to (b,t,h, dim/2, 2) from (b,t,h, dim) and view as complex numbers(the last dim of size 2 is real and imag parts) (b,t,h, dim/2)
+    xq_ = torch.view_as_complex(xq.float().reshape(*xq.shape[:-1], -1, 2)) # reshape last dim to dim/2, 2 i.e to (b,t,h, dim/2, 2) from (b,t,h, dim) and view as complex numbers(the last dim of size 2 is real and imag parts) (b,t,h, dim/2)
     xk_ = torch.view_as_complex(xk.float().reshape(*xk.shape[:-1], -1, 2)) # operate rotation in float32 for higher precision
     freqs_cis = reshape_for_broadcast(freqs_cis, xq_) # reshape freqs_cis (from (t,dim/2) to (1,t,1,dim/2)) to match x(b,t,h,dim/2) for broadcasting
-    xq_out = torch.view_as_real(xq_ * freqs_cis).flatten(3) #rotates in complex plane by multiplying with complex number of magnitude 1 and angle = position dependent freq theta_i, then view back as real and flatten last two dims to get back (b,t,h,dim)
-    xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(3) #dim/2 in complex,dim/2,2 in real, flatten to dim 
+    xq_out = torch.view_as_real(xq_ * freqs_cis).flatten(2) #rotates in complex plane by multiplying with complex number of magnitude 1 and angle = position dependent freq theta_i, then view back as real and flatten last two dims to get back (b,t,h,dim)
+    xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(2) #dim/2 in complex,dim/2,2 in real, flatten to dim 
     return xq_out.type_as(xq), xk_out.type_as(xk)
 
 
