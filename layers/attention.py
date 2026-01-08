@@ -56,7 +56,6 @@ class MultiHeadAttention(nn.Module):
 def attention(q, k, v, causal=False): # shape: (batch_size*heads, seq_length, head_dim)
     d_k = k.size(-1)
     #q,k,v: (batch_size*heads, seq_length, head_dim)
-    print(q.shape, k.shape, v.shape)
     scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k) # shape: (batch_size*heads, seq_length, seq_length)
     if causal: #for llms
         causal_mask = torch.triu(torch.ones(scores.size(-2), scores.size(-1)), diagonal=1).bool().to(scores.device) # upper triangular matrix with 1s above diagonal

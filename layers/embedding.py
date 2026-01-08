@@ -9,9 +9,9 @@ class EmbeddingLayer(nn.Module):
         super(EmbeddingLayer, self).__init__()
         self.weight = nn.Parameter(torch.randn(vocab_size, embedding_dim)) # Parameter are matrixes that can be optimized by optimzer in torch, i.e it tracks gradients
 
-    def forward(self, input_ids):
-        return self.weight[input_ids]
+    def forward(self, input_ids): 
+        return self.weight[input_ids.to(self.weight.device)] # input_ids shape: (batch_size, seq_length), output shape: (batch_size, seq_length, embedding_dim)
 
-if __name__ == "__main__":
-    embedding = EmbeddingLayer(vocab_size=256, embedding_dim=64)
-    print (embedding(torch.tensor([1,2,3,4,5]))) # should print a matrix of size (5, 64) of randomly initialized values
+# if __name__ == "__main__":
+#     embedding = EmbeddingLayer(vocab_size=256, embedding_dim=64)
+#     print (embedding(torch.tensor([1,2,3,4,5]))) # should print a matrix of size (5, 64) of randomly initialized values

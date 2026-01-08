@@ -1,3 +1,4 @@
+#trying to profile a simple GPT model using torch profiler
 #here we will try to use the classes, create a model and run a forward pass
 
 import torch
@@ -30,9 +31,30 @@ if __name__ == "__main__":
     input_tensor = torch.tensor([input_ids])  # Shape: (1, seq_length)
 
     # Run a forward pass through the model
-    with profile(activities=[ProfilerActivity.CPU], record_shapes=True) as prof:
+
+    activities = [ProfilerActivity.CPU]
+    if torch.cuda.is_available():
+        device = "cuda"
+        activities += [ProfilerActivity.CUDA]
+    elif torch.xpu.is_available():
+        device = "xpu"
+        activities += [ProfilerActivity.XPU]
+    else:
+        print(
+            "Neither CUDA nor XPU devices are available to demonstrate profiling on acceleration devices"
+        )
+        import sys
+
+        sys.exit(0)
+
+    sort_by_keyword = device + "_time_total"
+
+
+    with profile(activities=activities, record_shapes=True) as prof:
         with record_function("model_inference"):
-            output_logits = model(input_tensor)
+            output_logits =model(input_tensor.to(device))
+
+    print(prof.key_averages().table(sort_by=sort_by_keyword, row_limit=10))
 
     print("Input IDs:", input_ids)
     print("Output logits shape:", output_logits.shape)  # Should be (1, seq_length, vocab_size)
